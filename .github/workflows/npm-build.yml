@@ -4,8 +4,10 @@
 name: Todo app backend CI
 
 on:
-  release:
-    types: [created]
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main, dev ]
 
 jobs:
   build:
