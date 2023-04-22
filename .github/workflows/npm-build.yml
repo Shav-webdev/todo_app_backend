@@ -24,7 +24,7 @@ jobs:
 
   Deploy:
     needs: build
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     
     steps:
       - uses: actions/checkout@v3 
@@ -35,6 +35,7 @@ jobs:
             USER_NAME : ${{ secrets.USERNAME  }}
             
         run: |
+          sudo apt update && sudo apt install openssh-server &&
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
           ssh -i private_key ${USER_NAME}@${HOSTNAME} '
           
