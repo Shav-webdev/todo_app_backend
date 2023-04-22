@@ -37,7 +37,6 @@ jobs:
         run: |
           sudo apt update && sudo apt install openssh-server &&
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          cat >>~/.ssh/config <<END
           Host ec2
             HostName $HOSTNAME
             User $USERNAME
