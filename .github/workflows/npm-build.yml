@@ -37,14 +37,11 @@ jobs:
         run: |
           sudo apt update && sudo apt install openssh-server &&
           echo "$PRIVATE_KEY" > private_key && chmod 600 private_key
-          ssh -i private_key ${USER_NAME}@${HOSTNAME} '
-          
-            #Now we have got the access of EC2 and we will start the deploy .
-            pwd
-            cd /home/ubuntu/todo_app_backend &&
-            git checkout main &&
-            git fetch --all &&
-            git reset --hard origin/main &&
-            git pull origin main &&
-            npm install &&
-            npm run start '
+          cat >>~/.ssh/config <<END
+          Host ec2
+            HostName $HOSTNAME
+            User $USERNAME
+            IdentityFile private_key
+            StrictHostKeyChecking no
+          END
+          ssh ec2 'ls -la'
