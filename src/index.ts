@@ -1,47 +1,68 @@
 import { ApolloServer } from '@apollo/server';
-import { startStandaloneServer } from '@apollo/server/standalone';
+import { expressMiddleware } from '@apollo/server/express4';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
+import express from 'express';
+import { createServer } from 'http';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { WebSocketServer } from 'ws';
+import { useServer } from 'graphql-ws/lib/use/ws';
+import { PubSub } from 'graphql-subscriptions';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import resolvers  from './schema/resolvers';
+import typeDefs  from './schema/type-defs';
 
-const toDos = [];
+const PORT = 4000;
 
-const resolvers = {
-    Query: {
-        toDos: () => toDos,
-    },
-};
-const typeDefs = `    #graphql
-# Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
+// Create schema, which will be used separately by ApolloServer and
+// the WebSocket server.
 
-# This "tod" type defines the queryable fields for every book in our data source.
-type ToDo {
-    id: ID!
-    title: String!
-    createdAt: String!
-    updatedAt: String!
-}
+const schema = makeExecutableSchema({
+  typeDefs,
+  resolvers,
+});
 
-# The "Query" type is special: it lists all of the available queries that
-# clients can execute, along with the return type for each. In this
-# case, the "todos" query returns an array of zero or more ToDos (defined above).
-type Query {
-    toDos: [ToDo]
-}
+// Create an Express app and HTTP server; we will attach the WebSocket
+// server and the ApolloServer to this HTTP server.
+const app = express();
+const httpServer = createServer(app);
 
-type Mutation {
-    addToDo(id: ID, title: String): ToDo
-    editToDo(id: ID, title: String): ToDo
-}
+// Set up WebSocket server.
+const wsServer = new WebSocketServer({
+  server: httpServer,
+  path: '/graphql',
+});
+const serverCleanup = useServer({ schema }, wsServer);
 
-`;
-
+// Set up ApolloServer.
 const server = new ApolloServer({
-    typeDefs,
-    resolvers,
+  schema,
+  plugins: [
+    // Proper shutdown for the HTTP server.
+    ApolloServerPluginDrainHttpServer({ httpServer }),
+
+    // Proper shutdown for the WebSocket server.
+    {
+      async serverWillStart() {
+        return {
+          async drainServer() {
+            await serverCleanup.dispose();
+          },
+        };
+      },
+    },
+  ],
 });
 
-const PORT = Number(process.env.PORT) || 5000;
+(async () => {
+  await server.start();
+  await app.use('/graphql', cors<cors.CorsRequest>(), bodyParser.json(), expressMiddleware(server));
 
-const { url } = await startStandaloneServer(server, {
-    listen: { port: PORT },
+})()
+
+
+// Now that our HTTP server is fully set up, actually listen.
+httpServer.listen(PORT, () => {
+  console.log(`🚀 Query endpoint ready at http://localhost:${PORT}/graphql`);
+  console.log(`🚀 Subscription endpoint ready at ws://localhost:${PORT}/graphql`);
 });
-
-console.log(`🚀  Server ready at: ${url}`);

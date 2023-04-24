@@ -1,0 +1,23 @@
+type ToDo {
+    id: ID!
+    title: String!
+    dueDate: String!
+}
+
+type Query {
+    toDos: [ToDo!]
+}
+
+type Mutation {
+    addToDo(id: ID, title: String): ToDo!
+    editToDo(id: ID, title: String): ToDo!
+    deleteToDo(id: ID): ToDo!
+}
+
+type Subscription {
+    newTodo: ToDo!
+}
+
+input ToDoContent {
+    title: String!
+}
