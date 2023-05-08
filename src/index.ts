@@ -1,16 +1,15 @@
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
-import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import express from 'express';
-import { createServer } from 'http';
-import { makeExecutableSchema } from '@graphql-tools/schema';
-import { WebSocketServer } from 'ws';
-import { useServer } from 'graphql-ws/lib/use/ws';
-import { PubSub } from 'graphql-subscriptions';
-import bodyParser from 'body-parser';
 import cors from 'cors';
-import resolvers  from './schema/resolvers';
-import typeDefs  from './schema/type-defs';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import bodyParser from 'body-parser';
+import typeDefs from './schema/type-defs';
+import resolvers from './schema/resolvers';
+import { useServer } from 'graphql-ws/lib/use/ws';
+import { expressMiddleware } from '@apollo/server/express4';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 
 const PORT = 4000;
 
@@ -56,13 +55,18 @@ const server = new ApolloServer({
 
 (async () => {
   await server.start();
-  await app.use('/graphql', cors<cors.CorsRequest>(), bodyParser.json(), expressMiddleware(server));
-
-})()
-
+  await app.use(
+    '/graphql',
+    cors<cors.CorsRequest>(),
+    bodyParser.json(),
+    expressMiddleware(server)
+  );
+})();
 
 // Now that our HTTP server is fully set up, actually listen.
 httpServer.listen(PORT, () => {
   console.log(`🚀 Query endpoint ready at http://localhost:${PORT}/graphql`);
-  console.log(`🚀 Subscription endpoint ready at ws://localhost:${PORT}/graphql`);
+  console.log(
+    `🚀 Subscription endpoint ready at ws://localhost:${PORT}/graphql`
+  );
 });
