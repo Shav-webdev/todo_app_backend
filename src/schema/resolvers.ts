@@ -36,7 +36,7 @@ export default {
     },
     updateTodo: (parent, args) => {
       let updatedTodo;
-      todos.map((todo) => {
+      todos = todos.map((todo) => {
         if (todo.id === args.id) {
           updatedTodo = { ...todo, ...args };
         }
